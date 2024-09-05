@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BusinessLayer.Model.Models;
+using System;
 using WebApi.Models;
 
 namespace WebApi
@@ -16,6 +17,15 @@ namespace WebApi
             CreateMap<BaseInfo, BaseDto>();
             CreateMap<CompanyInfo, CompanyDto>();
             CreateMap<ArSubledgerInfo, ArSubledgerDto>();
+
+            CreateMap<EmployeeInfo, EmployeeDto>();
+
+            CreateMap<EmployeeInfo, EmployeeDetailDto>()
+            .ForMember(dest => dest.OccupationName, opt => opt.MapFrom(src => src.Occupation))
+            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Phone))
+            .ForMember(dest => dest.LastModifiedDateTime, opt => opt.MapFrom(src => src.LastModified.ToString("yyyy-MM-dd HH:mm:ss")));
+            CreateMap<CompanyInfo, EmployeeDetailDto>()
+                .ForMember(dest => dest.CompanyName, opt => opt.MapFrom(src => src.CompanyName));
         }
     }
 }

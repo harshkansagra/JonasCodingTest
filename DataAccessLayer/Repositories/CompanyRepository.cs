@@ -1,49 +1,120 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
+using System.Threading.Tasks;
 using DataAccessLayer.Model.Interfaces;
 using DataAccessLayer.Model.Models;
+using Serilog;
 
 namespace DataAccessLayer.Repositories
 {
     public class CompanyRepository : ICompanyRepository
     {
-	    private readonly IDbWrapper<Company> _companyDbWrapper;
+        private readonly IDbWrapper<Company> _companyDbWrapper;
 
-	    public CompanyRepository(IDbWrapper<Company> companyDbWrapper)
-	    {
-		    _companyDbWrapper = companyDbWrapper;
+        public CompanyRepository(IDbWrapper<Company> companyDbWrapper)
+        {
+            _companyDbWrapper = companyDbWrapper;
         }
 
-        public IEnumerable<Company> GetAll()
+        public async Task<IEnumerable<Company>> GetAllAsync()
         {
-            return _companyDbWrapper.FindAll();
-        }
-
-        public Company GetByCode(string companyCode)
-        {
-            return _companyDbWrapper.Find(t => t.CompanyCode.Equals(companyCode))?.FirstOrDefault();
-        }
-
-        public bool SaveCompany(Company company)
-        {
-            var itemRepo = _companyDbWrapper.Find(t =>
-                t.SiteId.Equals(company.SiteId) && t.CompanyCode.Equals(company.CompanyCode))?.FirstOrDefault();
-            if (itemRepo !=null)
+            try
             {
-                itemRepo.CompanyName = company.CompanyName;
-                itemRepo.AddressLine1 = company.AddressLine1;
-                itemRepo.AddressLine2 = company.AddressLine2;
-                itemRepo.AddressLine3 = company.AddressLine3;
-                itemRepo.Country = company.Country;
-                itemRepo.EquipmentCompanyCode = company.EquipmentCompanyCode;
-                itemRepo.FaxNumber = company.FaxNumber;
-                itemRepo.PhoneNumber = company.PhoneNumber;
-                itemRepo.PostalZipCode = company.PostalZipCode;
-                itemRepo.LastModified = company.LastModified;
-                return _companyDbWrapper.Update(itemRepo);
+                Log.Information("Get all Company Records.");
+                return await _companyDbWrapper.FindAllAsync();
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
-            return _companyDbWrapper.Insert(company);
+        public async Task<Company> GetByCodeAsync(string companyCode)
+        {
+            try
+            {
+                Log.Information($"Get Company Record with companyCode {companyCode}.");
+                IEnumerable<Company> filteredCompanies = await _companyDbWrapper.FindAsync(t => t.CompanyCode.Equals(companyCode));
+
+                return filteredCompanies?.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<bool> SaveCompanyAsync(Company company)
+        {
+            try
+            {
+                IEnumerable<Company> filteredCompanies = await _companyDbWrapper.FindAsync(t =>
+                                    t.SiteId.Equals(company.SiteId) && t.CompanyCode.Equals(company.CompanyCode));
+                Company existingCompany = filteredCompanies?.FirstOrDefault();
+
+
+                IEnumerable<Company> filteredCompanies2 = new List<Company>();
+                filteredCompanies2 = await _companyDbWrapper.FindAsync(t =>
+                                    t.SiteId.Equals(company.SiteId) && t.CompanyCode.Equals(company.CompanyCode));
+                Company existingCompany2 = new Company();
+                existingCompany2 = filteredCompanies?.FirstOrDefault();
+                
+                if (existingCompany != null)
+                {
+                    Log.Information($"Update existing Company Record with companyCode {company.CompanyCode} and SiteId {company.SiteId}.");
+                    existingCompany.CompanyName = company.CompanyName;
+                    existingCompany.AddressLine1 = company.AddressLine1;
+                    existingCompany.AddressLine2 = company.AddressLine2;
+                    existingCompany.AddressLine3 = company.AddressLine3;
+                    existingCompany.Country = company.Country;
+                    existingCompany.EquipmentCompanyCode = company.EquipmentCompanyCode;
+                    existingCompany.FaxNumber = company.FaxNumber;
+                    existingCompany.PhoneNumber = company.PhoneNumber;
+                    existingCompany.PostalZipCode = company.PostalZipCode;
+                    existingCompany.LastModified = company.LastModified;
+                    existingCompany.ArSubledgers = SaveSubLedger(existingCompany.ArSubledgers, company.ArSubledgers);
+                    return await _companyDbWrapper.UpdateAsync(existingCompany);
+                }
+
+                Log.Information($"Insert new Company Record with companyCode {company.CompanyCode} and SiteId {company.SiteId}.");
+                return await _companyDbWrapper.InsertAsync(company);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public List<ArSubledger> SaveSubLedger(List<ArSubledger> existingArSugledgers, List<ArSubledger> newSublegers)
+        {
+            if (!existingArSugledgers.Any())
+                return newSublegers;
+
+            //if same ArSubledgerCode exist Select new subledgers else select existing subledger
+            List<ArSubledger> UpdatedSubLedgers = (from existingRec in existingArSugledgers
+                                                   join newRecord in newSublegers on existingRec.ArSubledgerCode equals newRecord.ArSubledgerCode into r
+                                                   from newRec in r.DefaultIfEmpty()
+                                                   select newRec != null ? newRec : existingRec).ToList();
+
+            //Add new subledgers
+            UpdatedSubLedgers.AddRange(newSublegers.Where(x => !existingArSugledgers.Select(rec => rec.ArSubledgerCode).Contains(x.ArSubledgerCode)));
+
+            return UpdatedSubLedgers;
+        }
+
+        public async Task<bool> DeleteCompanyAsync(string companyCode)
+        {
+            try
+            {
+                Log.Information($"Deleting Company Record with companyCode {companyCode}.");
+                return await _companyDbWrapper.DeleteAsync(t => t.CompanyCode.Equals(companyCode));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }

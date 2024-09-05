@@ -84,7 +84,17 @@ namespace WebApi.App_Start
             }).InSingletonScope();
             kernel.Bind<ICompanyService>().To<CompanyService>();
             kernel.Bind<ICompanyRepository>().To<CompanyRepository>();
-            kernel.Bind(typeof(IDbWrapper<>)).To(typeof(InMemoryDatabase<>));
+
+            kernel.Bind(typeof(InMemoryDatabase<>)).ToSelf().InSingletonScope();
+            kernel.Bind(typeof(IDbWrapper<>)).ToMethod(context =>
+            {
+                var genericType = context.Request.Service.GenericTypeArguments[0];
+                var inMemoryDbType = typeof(InMemoryDatabase<>).MakeGenericType(genericType);
+                return context.Kernel.Get(inMemoryDbType);
+            });
+
+            kernel.Bind<IEmployeeService>().To<EmployeeService>();
+            kernel.Bind<IEmployeeRepository>().To<EmployeeRepository>();
         }
     }
 }

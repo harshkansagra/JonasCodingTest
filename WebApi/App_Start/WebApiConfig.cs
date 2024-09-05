@@ -1,6 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Web.Http;
+﻿using System.Web.Http;
+using WebApi.Filters;
 
 
 namespace WebApi
@@ -19,6 +18,8 @@ namespace WebApi
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            config.Filters.Add(new ValidateModelAttribute());
         }
     }
 }

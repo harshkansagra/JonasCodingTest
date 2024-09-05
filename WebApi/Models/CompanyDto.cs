@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.Models
 {
     public class CompanyDto : BaseDto
     {
+        [Required(AllowEmptyStrings = false)]
         public string CompanyName { get; set; }
         public string AddressLine1 { get; set; }
         public string AddressLine2 { get; set; }

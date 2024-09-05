@@ -1,9 +1,11 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.Models
 {
     public class ArSubledgerDto : BaseDto
     {
+        [Required(AllowEmptyStrings = false)]
         public string ArSubledgerCode { get; set; }
         public string Description { get; set; }
         public string CustomerName { get; set; }
@@ -24,7 +26,10 @@ namespace WebApi.Models
     }
     public class BaseDto
     {
+        [Required(AllowEmptyStrings = false)]
         public string SiteId { get; set; }
+
+        [Required(AllowEmptyStrings = false)]
         public string CompanyCode { get; set; }
     }
 }

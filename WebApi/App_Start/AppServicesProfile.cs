@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
 using BusinessLayer.Model.Models;
+using DataAccessLayer.Model.Models;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using WebApi.Models;
 
 namespace WebApi
@@ -17,6 +20,10 @@ namespace WebApi
             CreateMap<BaseInfo, BaseDto>();
             CreateMap<CompanyInfo, CompanyDto>();
             CreateMap<ArSubledgerInfo, ArSubledgerDto>();
+
+            CreateMap<CompanyDto, CompanyInfo>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null && (!(srcMember is DateTime) || (DateTime)srcMember != DateTime.MinValue)));
+            CreateMap<ArSubledger, ArSubledger>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<EmployeeInfo, EmployeeDto>();
 

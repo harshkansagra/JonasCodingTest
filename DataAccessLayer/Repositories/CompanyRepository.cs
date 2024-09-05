@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using DataAccessLayer.Model.Interfaces;
 using DataAccessLayer.Model.Models;
 using Serilog;
+using AutoMapper;
 
 namespace DataAccessLayer.Repositories
 {
     public class CompanyRepository : ICompanyRepository
     {
         private readonly IDbWrapper<Company> _companyDbWrapper;
+        private readonly IMapper _mapper;
 
-        public CompanyRepository(IDbWrapper<Company> companyDbWrapper)
+        public CompanyRepository(IDbWrapper<Company> companyDbWrapper, IMapper mapper)
         {
             _companyDbWrapper = companyDbWrapper;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<Company>> GetAllAsync()
@@ -53,13 +55,6 @@ namespace DataAccessLayer.Repositories
                 IEnumerable<Company> filteredCompanies = await _companyDbWrapper.FindAsync(t =>
                                     t.SiteId.Equals(company.SiteId) && t.CompanyCode.Equals(company.CompanyCode));
                 Company existingCompany = filteredCompanies?.FirstOrDefault();
-
-
-                IEnumerable<Company> filteredCompanies2 = new List<Company>();
-                filteredCompanies2 = await _companyDbWrapper.FindAsync(t =>
-                                    t.SiteId.Equals(company.SiteId) && t.CompanyCode.Equals(company.CompanyCode));
-                Company existingCompany2 = new Company();
-                existingCompany2 = filteredCompanies?.FirstOrDefault();
                 
                 if (existingCompany != null)
                 {
@@ -94,9 +89,9 @@ namespace DataAccessLayer.Repositories
 
             //if same ArSubledgerCode exist Select new subledgers else select existing subledger
             List<ArSubledger> UpdatedSubLedgers = (from existingRec in existingArSugledgers
-                                                   join newRecord in newSublegers on existingRec.ArSubledgerCode equals newRecord.ArSubledgerCode into r
-                                                   from newRec in r.DefaultIfEmpty()
-                                                   select newRec != null ? newRec : existingRec).ToList();
+                                                   join updatedRecord in newSublegers on existingRec.ArSubledgerCode equals updatedRecord.ArSubledgerCode into r
+                                                   from updatedRec in r.DefaultIfEmpty()
+                                                   select updatedRec != null ? _mapper.Map(updatedRec, existingRec) : existingRec).ToList();
 
             //Add new subledgers
             UpdatedSubLedgers.AddRange(newSublegers.Where(x => !existingArSugledgers.Select(rec => rec.ArSubledgerCode).Contains(x.ArSubledgerCode)));

@@ -64,5 +64,18 @@ namespace DataAccessLayer.Repositories
                 throw ex;
             }
         }
+
+        public async Task<bool> DeleteCompanyEmployeesAsync(string siteId)
+        {
+            try
+            {
+                Log.Information($"Deleting Company Employees with siteId {siteId}.");
+                return await _employeeDbWrapper.DeleteAsync(t => t.SiteId.Equals(siteId));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }

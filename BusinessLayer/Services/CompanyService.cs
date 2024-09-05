@@ -12,11 +12,13 @@ namespace BusinessLayer.Services
     public class CompanyService : ICompanyService
     {
         private readonly ICompanyRepository _companyRepository;
+        private readonly IEmployeeRepository _employeeRepository;
         private readonly IMapper _mapper;
 
-        public CompanyService(ICompanyRepository companyRepository, IMapper mapper)
+        public CompanyService(ICompanyRepository companyRepository, IEmployeeRepository employeeRepository, IMapper mapper)
         {
             _companyRepository = companyRepository;
+            _employeeRepository = employeeRepository;
             _mapper = mapper;
         }
 
@@ -58,11 +60,10 @@ namespace BusinessLayer.Services
                 throw new KeyNotFoundException($"Company with code {company.CompanyCode} not found.");
             }
 
-            // Update existing company with new values
-            _mapper.Map(company, existingCompany);
+            var companyEntity = _mapper.Map<Company>(company); // Assuming there's a Company entity class
 
             // Update the repository
-            await _companyRepository.SaveCompanyAsync(existingCompany);
+            await _companyRepository.SaveCompanyAsync(companyEntity);
         }
 
         public async Task DeleteCompanyAsync(string companyCode)
@@ -78,6 +79,7 @@ namespace BusinessLayer.Services
                 throw new KeyNotFoundException($"Company with code {companyCode} not found.");
             }
 
+            await _employeeRepository.DeleteCompanyEmployeesAsync(company.SiteId);
             // Remove the company from the repository
             await _companyRepository.DeleteCompanyAsync(companyCode);
         }

@@ -6,6 +6,7 @@ using System.Web.Http;
 using AutoMapper;
 using BusinessLayer.Model.Interfaces;
 using BusinessLayer.Model.Models;
+using WebApi.Filters;
 using WebApi.Models;
 
 namespace WebApi.Controllers
@@ -63,7 +64,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task PostAsync([FromBody] EmployeeDto employeeDto)
+        [ValidateModel]
+        public async Task<IHttpActionResult> PostAsync([FromBody] EmployeeDto employeeDto)
         {
 
             if (employeeDto == null)
@@ -79,6 +81,8 @@ namespace WebApi.Controllers
 
             var employeeEntity = _mapper.Map<EmployeeInfo>(employeeDto);
             await _employeeService.CreateEmployeeAsync(employeeEntity);
+
+            return Ok("Employee created successfully");
         }
     }
 }

@@ -54,7 +54,7 @@ namespace WebApi.Controllers
             return Ok("Company created successfully");
         }
 
-        public async Task PutAsync(string companyCode, [FromBody] CompanyDto companyDto)
+        public async Task<IHttpActionResult> PutAsync(string companyCode, [FromBody] CompanyDto companyDto)
         {
             if (string.IsNullOrEmpty(companyCode) || companyDto == null)
             {
@@ -67,11 +67,15 @@ namespace WebApi.Controllers
                 throw new Exception($"No company found with companyCode as {companyCode}.");
             }
 
-            var companyEntity = _mapper.Map<CompanyInfo>(companyDto);
-            await _companyService.UpdateCompanyAsync(companyEntity);
+            //take updated fields from companyDto and create new object
+            CompanyInfo updatedCompany = _mapper.Map(companyDto, existingCompany);
+
+            await _companyService.UpdateCompanyAsync(updatedCompany);
+
+            return Ok("Company updated successfully");
         }
 
-        public async Task DeleteAsync(string companyCode)
+        public async Task<IHttpActionResult> DeleteAsync(string companyCode)
         {
             var existingCompany = await _companyService.GetCompanyByCodeAsync(companyCode);
             if (existingCompany == null)
@@ -80,6 +84,8 @@ namespace WebApi.Controllers
             }
 
             await _companyService.DeleteCompanyAsync(companyCode);
+
+            return Ok("Company and It's Employees deleted successfully");
         }
     }
 }
